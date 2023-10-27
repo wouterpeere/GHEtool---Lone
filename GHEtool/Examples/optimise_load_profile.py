@@ -1,0 +1,49 @@
+"""
+This document is an example of load optimisation.
+First an hourly profile is imported and a fixed borefield size is set.
+Then, based on a load-duration curve, the heating and cooling load is altered in order to fit as much load as possible on the field.
+The results are returned.
+
+"""
+import numpy as np
+
+# import all the relevant functions
+from GHEtool import *
+
+
+def optimise():
+
+    # initiate ground data
+    data = GroundConstantTemperature(3, 10)
+
+    # initiate borefield
+    borefield = Borefield()
+
+    # set ground data in borefield
+    borefield.set_ground_parameters(data)
+
+    # set Rb
+    borefield.Rb = 0.12
+
+    # set borefield
+    borefield.create_rectangular_borefield(10, 10, 6, 6, 110, 1, 0.075)
+
+    # load the hourly profile
+    load = HourlyGeothermalLoad()
+    load.load_hourly_profile("hourly_profile.csv", header=True, separator=";")
+
+    # optimise the load for a 10x10 field (see data above) and a fixed depth of 150m.
+    borefield.optimise_load_profile(building_load=load, depth=150, print_results=True)
+
+    # calculate temperatures
+    borefield.calculate_temperatures(hourly=True)
+
+    # print resulting external peak cooling profile
+    print(borefield._external_load.max_peak_cooling)
+
+    # print resulting monthly load for an external heating source
+    print(np.sum(borefield._external_load.hourly_heating_load))
+
+
+if __name__ == "__main__":  # pragma: no cover
+    optimise()
